@@ -142,12 +142,3 @@ make clean       # Remove executables and object files
 ### Testing Setup
 
 Testing was performed locally using multiple terminal windows to simulate concurrent client connections.
-
----
-
-## 👤 Author
-
-**Leone Valerio**  
-Department of Computer Science, University of Pisa  
-Student ID: 656932  
-Course A — Laboratory II Summer Project
