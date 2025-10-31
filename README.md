@@ -1,111 +1,153 @@
-Paroliere — Multiplayer Word Game (Client/Server in C)
+# 🎮 Paroliere — Multiplayer Word Game
 
-This project implements a multiplayer word game called Paroliere (similar to Boggle) using a client-server architecture in C.
-It was developed as part of the Laboratorio II Summer Project at the Department of Computer Science, University of Pisa.
+A multiplayer word game similar to Boggle, built with a client-server architecture in C. Developed as part of the **Laboratorio II Summer Project** at the Department of Computer Science, University of Pisa.
 
-Project Structure
+---
 
-The project consists of two main programs:
+## 📋 Table of Contents
 
-paroliere_srv.c — Implements the multithreaded server, responsible for managing connected clients, handling requests, generating game matrices, and maintaining player rankings.
+- [Overview](#overview)
+- [Project Structure](#project-structure)
+- [Data Structures](#data-structures)
+- [Core Algorithms](#core-algorithms)
+- [Communication Protocol](#communication-protocol)
+- [Server Architecture](#server-architecture)
+- [Client Architecture](#client-architecture)
+- [Building and Testing](#building-and-testing)
+- [Author](#author)
 
-paroliere_cl.c — Implements the client, which connects to the server, sends commands, receives updates, and displays the game state and final scores.
+---
 
-Additional modules improve modularity and maintainability:
+## 🎯 Overview
 
-File	Description
-strutture.h / strutture.c	Data structures required for gameplay.
-matrix.h / matrix.c	Functions for matrix generation and display.
-serializzazione_messaggi.h / serializzazione_messaggi.c	Serialization/deserialization of messages between server and client.
-controllo_parole_matrix.h / controllo_parole_matrix.c	Word validation logic (check if a word exists in the matrix).
-format_parole.h / format_parole.c	Word formatting utilities.
-macros.h	Macros for syscall error handling.
-trie.h / trie.c	Implementation of the Trie data structure for dictionary lookup.
-Data Structures
+Paroliere is a competitive word-finding game where players search for words in a randomly generated letter matrix. The implementation features:
 
-Player — Contains username, score, and words used during a match. Managed via a shared array across threads.
+- **Multithreaded server** handling multiple concurrent clients
+- **Efficient communication** through message serialization
+- **Real-time ranking system** with asynchronous updates
+- **Trie-based dictionary** for fast word validation
 
-DataHandler — Parameters passed to the thread managing each client connection.
+---
 
-Message — Defines message format (type, length, and content).
+## 📁 Project Structure
 
-DataScorer — Parameters used by the ranking thread (scorer).
+### Main Programs
 
-DataClient — Used by the asynchronous client thread to receive final ranking updates.
+- **`paroliere_srv.c`** — Multithreaded server managing clients, game matrices, and player rankings
+- **`paroliere_cl.c`** — Client handling user interaction, commands, and game state display
 
-TrieNode — Node structure for the dictionary Trie.
+### Supporting Modules
 
-Bacheca — Shared message board protected by mutexes for safe concurrent access.
+| File | Description |
+|------|-------------|
+| `strutture.h` / `strutture.c` | Core game data structures |
+| `matrix.h` / `matrix.c` | Matrix generation and display functions |
+| `serializzazione_messaggi.h` / `.c` | Message serialization/deserialization |
+| `controllo_parole_matrix.h` / `.c` | Word validation in matrix |
+| `format_parole.h` / `format_parole.c` | Word formatting utilities |
+| `macros.h` | System call error handling macros |
+| `trie.h` / `trie.c` | Trie data structure for dictionary lookup |
 
-Algorithms and Logic
-Word Search in Matrix
+---
 
-Implements recursive depth-first search using:
+## 🗂️ Data Structures
 
-is_valid_move — Validates matrix boundaries and visited cells.
+| Structure | Purpose |
+|-----------|---------|
+| **Player** | Stores username, score, and words used during a match |
+| **DataHandler** | Parameters for client connection threads |
+| **Message** | Defines message format (type, length, content) |
+| **DataScorer** | Parameters for the ranking thread |
+| **DataClient** | Handles asynchronous ranking updates |
+| **TrieNode** | Node structure for dictionary Trie |
+| **Bacheca** | Shared message board with mutex protection |
 
-search_from — Recursively searches for the word in 8 directions.
+---
 
-exist — Initiates the search from every matrix cell.
+## 🧮 Core Algorithms
 
-Dictionary Search
+### 🔍 Word Search in Matrix
 
-Implemented using a Trie with search() to check if a word exists in the dictionary.
+Implements recursive depth-first search with:
 
-Communication Mechanism
+- **`is_valid_move`** — Validates matrix boundaries and visited cells
+- **`search_from`** — Recursively searches in 8 directions
+- **`exist`** — Initiates search from every matrix cell
 
-Communication between client and server is based on serialized messages with three fields:
+### 📚 Dictionary Lookup
 
+Uses a **Trie data structure** with `search()` function for O(n) word validation, where n is the word length.
+
+---
+
+## 📡 Communication Protocol
+
+Messages between client and server follow a three-field format:
+
+```
 [length][type][content]
+```
 
+- **Single read/write operation** per message
+- **Automatic serialization/deserialization** for reusability
+- **Type-based routing** for different message handlers
 
-This allows efficient data transfer with a single read/write operation per message.
-Messages are serialized/deserialized automatically for reuse.
+---
 
-Server Logic
+## 🖥️ Server Architecture
 
-Multithreaded design: a new thread is spawned for each connected client.
+### Design Features
 
-Synchronization: handled through mutexes and condition variables.
+- **Multithreading** — New thread spawned per client connection
+- **Synchronization** — Mutexes and condition variables ensure thread safety
+- **Game Phases** — Managed via `alarm` signals for round transitions
+- **Ranking System** — Dedicated scorer thread compiles and broadcasts leaderboards
+- **Graceful Shutdown** — `SIGINT` handler for safe termination
 
-Game Phases: managed via signals (alarm) that trigger round transitions.
+---
 
-Ranking: a dedicated scorer thread compiles the leaderboard and sends it asynchronously to all clients.
+## 💻 Client Architecture
 
-Signal Handling: SIGINT safely terminates the server.
+### Features
 
-Client Logic
+- Connects to server and displays available commands
+- Sends serialized requests and receives asynchronous responses
+- **Dedicated thread** processes matrix and ranking messages
+- Handles `SIGINT` for graceful exit
 
-Connects to the server and displays available commands.
+---
 
-Sends serialized requests and receives responses asynchronously.
+## 🛠️ Building and Testing
 
-Dedicated thread processes matrix and ranking messages (MSG_MATRICE, MSG_PUNTI_FINALI).
+A `Makefile` is provided for easy compilation and testing.
 
-Handles SIGINT gracefully on exit.
+### Basic Commands
 
-Testing and Compilation
-
-A Makefile is provided to build and test both the server and client.
-
-Build Commands
+```bash
 make all         # Compile all executables
 make testServer  # Run server with default settings
 make testClient  # Run client
 make clean       # Remove executables and object files
+```
 
-Advanced Test Targets
-Command	Description
-make testServer1	Run server with --matrix and --duration
-make testServer2	Run server with --matrix, --duration, and --seed
-make testServer3	Run server with --duration and --seed
-make testServer4	Run server with --matrix, --duration, and --dict
+### Advanced Test Targets
 
-Testing was performed locally with multiple terminal windows to simulate several connected clients.
+| Command | Description |
+|---------|-------------|
+| `make testServer1` | Run server with `--matrix` and `--duration` |
+| `make testServer2` | Run server with `--matrix`, `--duration`, and `--seed` |
+| `make testServer3` | Run server with `--duration` and `--seed` |
+| `make testServer4` | Run server with `--matrix`, `--duration`, and `--dict` |
 
-Author
+### Testing Setup
 
-Leone Valerio
-Department of Computer Science, University of Pisa
-Student ID: 656932
+Testing was performed locally using multiple terminal windows to simulate concurrent client connections.
+
+---
+
+## 👤 Author
+
+**Leone Valerio**  
+Department of Computer Science, University of Pisa  
+Student ID: 656932  
 Course A — Laboratory II Summer Project
